@@ -1,23 +1,21 @@
-﻿@{
-    Layout = null;
-}
-<!DOCTYPE html>
-<html>
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Contract Monthly Claim System (CMCS)</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Contract Monthly Claim System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
 </head>
-<body class="bg-light">
+<body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">CMCS</a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="/Lecturer/SubmitClaim">Submit Claim</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Coordinator/VerifyClaims">Verify Claims</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Lecturer/TrackStatus">Track Status</a></li>
-                </ul>
+        <div class="container">
+            <a class="navbar-brand" href="@Url.Action("Index", "Home")">
+                Contract Monthly Claim System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="@Url.Action("SubmitClaim", "Claim")">Submit Claim</a>
+                <a class="nav-link" href="@Url.Action("TrackStatus", "Claim")">Track Status</a>
+                <a class="nav-link" href="@Url.Action("VerifyClaims", "Management")">Verify Claims</a>
             </div>
         </div>
     </nav>
@@ -25,5 +23,7 @@
     <div class="container mt-4">
         @RenderBody()
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

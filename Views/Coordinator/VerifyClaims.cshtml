@@ -1,0 +1,113 @@
+﻿@model List<PROG6212_POE_ST10021259.Models.Claim>
+@{
+    ViewData["Title"] = "Verify Claims";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Pending Claims for Verification</h2>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Success!</strong> @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> No Pending Claims</h5>
+            <p>There are currently no claims awaiting verification.</p>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> <strong>@Model.Count</strong> claim(s) pending verification
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Claim ID</th>
+                        <th>Date Submitted</th>
+                        <th>Hours Worked</th>
+                        <th>Hourly Rate</th>
+                        <th>Total Amount</th>
+                        <th>Notes</th>
+                        <th>Supporting Document</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var claim in Model.OrderBy(c => c.DateSubmitted))
+                    {
+                        <tr>
+                            <td><strong>#@claim.Id</strong></td>
+                            <td>@claim.DateSubmitted.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@claim.HoursWorked hrs</td>
+                            <td>R @claim.HourlyRate.ToString("F2")</td>
+                            <td><strong class="text-success">R @claim.TotalAmount.ToString("F2")</strong></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(claim.Notes))
+                                {
+                                    <span>@claim.Notes</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No notes</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(claim.SupportingDocument))
+                                {
+                                    <a href="~/uploads/@claim.SupportingDocument" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-file-earmark-pdf"></i> View Document
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No document</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <form asp-action="Approve" method="post" style="display:inline" onsubmit="return confirm('Are you sure you want to approve Claim #@claim.Id?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@claim.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-circle"></i> Approve
+                                        </button>
+                                    </form>
+                                    <form asp-action="Reject" method="post" style="display:inline; margin-left: 5px;" onsubmit="return confirm('Are you sure you want to reject Claim #@claim.Id?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@claim.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            <i class="bi bi-x-circle"></i> Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="mt-3">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+    </div>
+</div>

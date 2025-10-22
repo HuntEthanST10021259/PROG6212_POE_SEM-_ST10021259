@@ -1,20 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PROG6212_POE_ST10021259.Models;
+using PROG6212_POE_ST10021259.Services;
 using System.IO;
 
 namespace PROG6212_POE_ST10021259.Controllers
 {
     public class LecturerController : Controller
     {
-        // Static list to store claims (in-memory storage)
-        private static List<Claim> _claims = new List<Claim>();
-        private static int _nextId = 1;
-
         [HttpGet]
         public IActionResult SubmitClaim()
         {
             return View();
-        } 
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -22,8 +19,8 @@ namespace PROG6212_POE_ST10021259.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Assign unique ID
-                claim.Id = _nextId++;
+                // Assign unique ID from shared service
+                claim.Id = ClaimService.GetNextId();
                 claim.DateSubmitted = DateTime.Now;
                 claim.Status = "Pending";
 
@@ -44,8 +41,8 @@ namespace PROG6212_POE_ST10021259.Controllers
                     claim.SupportingDocument = uniqueFileName;
                 }
 
-                // Save claim to storage
-                _claims.Add(claim);
+                // Save claim to shared storage
+                ClaimService.AddClaim(claim);
 
                 TempData["Message"] = $"Claim submitted successfully! Claim ID: {claim.Id}, Total Amount: R{claim.TotalAmount:F2}";
                 return RedirectToAction("SubmitClaim");
@@ -57,7 +54,8 @@ namespace PROG6212_POE_ST10021259.Controllers
         [HttpGet]
         public IActionResult TrackStatus()
         {
-            return View(_claims);
+            var claims = ClaimService.GetAllClaims();
+            return View(claims);
         }
 
         public IActionResult Test()

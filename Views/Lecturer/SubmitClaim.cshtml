@@ -1,34 +1,73 @@
-﻿@{
+﻿@model PROG6212_POE_ST10021259.Models.Claim
+@{
     ViewData["Title"] = "Submit Monthly Claim";
 }
 
-<h2>Submit Monthly Claim</h2>
+<div class="container mt-4">
+    <h2 class="mb-4">Submit Monthly Claim</h2>
 
-<div class="row">
-    <div class="col-md-8">
-        <form class="card p-4 shadow-sm">
-            <div class="mb-3">
-                <label class="form-label">Hours Worked</label>
-                <input type="number" class="form-control" placeholder="Enter hours worked" />
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Success!</strong> @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-controller="Lecturer" asp-action="SubmitClaim" method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
+                <div class="mb-3">
+                    <label asp-for="HoursWorked" class="form-label"></label>
+                    <input asp-for="HoursWorked" class="form-control" placeholder="Enter hours worked" type="number" step="0.01" />
+                    <span asp-validation-for="HoursWorked" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="HourlyRate" class="form-label"></label>
+                    <input asp-for="HourlyRate" class="form-control" placeholder="Enter hourly rate" type="number" step="0.01" />
+                    <span asp-validation-for="HourlyRate" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Enter any additional notes (optional)..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Upload Supporting Documents (Optional)</label>
+                    <input type="file" name="supportingDocument" class="form-control" accept=".pdf,.doc,.docx,.xlsx" />
+                    <div class="form-text">Accepted formats: PDF, DOC, DOCX, XLSX (Max 10MB)</div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle"></i> Submit Claim
+                    </button>
+                    <a asp-action="TrackStatus" class="btn btn-outline-secondary">
+                        View My Claims
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Submission Guidelines</h5>
+                    <ul class="small">
+                        <li>Enter the total hours worked for the month</li>
+                        <li>Specify your hourly rate in Rands (R)</li>
+                        <li>Upload supporting documents if available</li>
+                        <li>Your claim will be reviewed by management</li>
+                        <li>Track your claim status anytime</li>
+                    </ul>
+                </div>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label">Hourly Rate</label>
-                <input type="number" class="form-control" placeholder="Enter hourly rate" />
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Additional Notes</label>
-                <textarea class="form-control" rows="3" placeholder="Enter notes..."></textarea>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Upload Supporting Documents</label>
-                <input type="file" class="form-control" accept=".pdf,.doc,.docx,.xlsx" />
-                <div class="form-text">Accepted formats: PDF, DOC, XLSX</div>
-            </div>
-
-            <button type="button" class="btn btn-success">Submit Claim</button>
-        </form>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

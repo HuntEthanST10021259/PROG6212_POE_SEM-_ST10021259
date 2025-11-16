@@ -5,35 +5,143 @@
 <div class="text-center">
     <h1 class="display-4">Contract Monthly Claim System</h1>
     <p class="lead">Welcome to the Contract Monthly Claim System for Independent Contractors</p>
+    <p class="text-muted">Automated claim processing with two-level approval workflow</p>
 </div>
 
 <div class="row mt-5">
-    <div class="col-md-4">
-        <div class="card">
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
             <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-file-earmark-text" style="font-size: 3rem; color: #0d6efd;"></i>
+                </div>
                 <h5 class="card-title">Submit Claims</h5>
-                <p class="card-text">Lecturers can submit their monthly claims quickly and easily.</p>
-                <a href="@Url.Action("SubmitClaim", "Lecturer")" class="btn btn-primary">Submit Claim</a>
+                <p class="card-text">Lecturers can submit their monthly claims with automatic calculation.</p>
+                <a href="@Url.Action("SubmitClaim", "Lecturer")" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Submit Claim
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card">
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
             <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-graph-up" style="font-size: 3rem; color: #198754;"></i>
+                </div>
                 <h5 class="card-title">Track Status</h5>
-                <p class="card-text">Monitor your claim status transparently until settlement.</p>
-                <a href="@Url.Action("TrackStatus", "Lecturer")" class="btn btn-success">Track Claims</a>
+                <p class="card-text">Monitor your claim status transparently through the approval process.</p>
+                <a href="@Url.Action("TrackStatus", "Lecturer")" class="btn btn-success">
+                    <i class="bi bi-search"></i> Track Claims
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card">
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
             <div class="card-body text-center">
-                <h5 class="card-title">Verify Claims</h5>
-                <p class="card-text">Program coordinators and managers can verify and approve claims.</p>
-                <a href="@Url.Action("VerifyClaims", "Coordinator")" class="btn btn-warning">Verify Claims</a>
+                <div class="mb-3">
+                    <i class="bi bi-clipboard-check" style="font-size: 3rem; color: #ffc107;"></i>
+                </div>
+                <h5 class="card-title">Coordinator Review</h5>
+                <p class="card-text">Program coordinators verify and approve submitted claims.</p>
+                <a href="@Url.Action("VerifyClaims", "Coordinator")" class="btn btn-warning">
+                    <i class="bi bi-clipboard-check"></i> Verify Claims
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-award" style="font-size: 3rem; color: #6f42c1;"></i>
+                </div>
+                <h5 class="card-title">Manager Approval</h5>
+                <p class="card-text">Managers give final approval for payment processing.</p>
+                <a href="@Url.Action("ApproveApprovedClaims", "Manager")" class="btn btn-purple" style="background-color: #6f42c1; color: white;">
+                    <i class="bi bi-check-circle-fill"></i> Final Approve
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="text-center mb-4">System Features</h3>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-calculator"></i> Auto-Calculation</h5>
+                <p class="card-text">Automatic computation of payment based on hours worked and hourly rate with real-time validation.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-arrow-repeat"></i> Two-Level Approval</h5>
+                <p class="card-text">Robust workflow requiring both Program Coordinator and Manager approval before payment.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-file-earmark-arrow-up"></i> Document Upload</h5>
+                <p class="card-text">Support for uploading supporting documents (PDF, DOC, DOCX, XLSX) with automatic validation.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Workflow Diagram -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h4 class="text-center mb-4">Approval Workflow</h4>
+                <div class="d-flex justify-content-around align-items-center flex-wrap">
+                    <div class="text-center mb-3">
+                        <div class="badge bg-primary p-3" style="font-size: 1.2rem;">
+                            <i class="bi bi-1-circle"></i> Lecturer Submits
+                        </div>
+                        <p class="small mt-2">Submit claim with hours & rate</p>
+                    </div>
+                    <div class="text-center mb-3">
+                        <i class="bi bi-arrow-right" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="text-center mb-3">
+                        <div class="badge bg-warning p-3" style="font-size: 1.2rem;">
+                            <i class="bi bi-2-circle"></i> Coordinator Reviews
+                        </div>
+                        <p class="small mt-2">First level approval</p>
+                    </div>
+                    <div class="text-center mb-3">
+                        <i class="bi bi-arrow-right" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="text-center mb-3">
+                        <div class="badge bg-purple p-3" style="font-size: 1.2rem; background-color: #6f42c1;">
+                            <i class="bi bi-3-circle"></i> Manager Approves
+                        </div>
+                        <p class="small mt-2">Final approval</p>
+                    </div>
+                    <div class="text-center mb-3">
+                        <i class="bi bi-arrow-right" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="text-center mb-3">
+                        <div class="badge bg-success p-3" style="font-size: 1.2rem;">
+                            <i class="bi bi-4-circle"></i> Payment Processed
+                        </div>
+                        <p class="small mt-2">Claim is paid</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

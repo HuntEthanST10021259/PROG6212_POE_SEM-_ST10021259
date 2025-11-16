@@ -1,0 +1,131 @@
+﻿@model List<PROG6212_POE_ST10021259.Models.Claim>
+@{
+    ViewData["Title"] = "Manager Final Approval";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Claims Pending Final Approval</h2>
+    <p class="text-muted">Review claims that have been approved by the Program Coordinator</p>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Success!</strong> @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> No Claims Awaiting Final Approval</h5>
+            <p>There are currently no claims that have been approved by coordinators awaiting your final approval.</p>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-primary">
+            <i class="bi bi-clipboard-check"></i> <strong>@Model.Count</strong> claim(s) awaiting final approval
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Claim ID</th>
+                        <th>Date Submitted</th>
+                        <th>Hours Worked</th>
+                        <th>Hourly Rate</th>
+                        <th>Total Amount</th>
+                        <th>Notes</th>
+                        <th>Supporting Document</th>
+                        <th>Coordinator Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var claim in Model.OrderBy(c => c.DateSubmitted))
+                    {
+                        <tr>
+                            <td><strong>#@claim.Id</strong></td>
+                            <td>@claim.DateSubmitted.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@claim.HoursWorked hrs</td>
+                            <td>R @claim.HourlyRate.ToString("F2")</td>
+                            <td><strong class="text-primary">R @claim.TotalAmount.ToString("F2")</strong></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(claim.Notes))
+                                {
+                                    <span>@claim.Notes</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No notes</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(claim.SupportingDocument))
+                                {
+                                    <a href="~/uploads/@claim.SupportingDocument" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-file-earmark-pdf"></i> View Document
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No document</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-success">Approved by Coordinator</span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <form asp-action="FinalApprove" method="post" style="display:inline" onsubmit="return confirm('Are you sure you want to give FINAL APPROVAL to Claim #@claim.Id for payment of R@claim.TotalAmount.ToString()?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@claim.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-circle-fill"></i> Final Approve
+                                        </button>
+                                    </form>
+                                    <form asp-action="FinalReject" method="post" style="display:inline; margin-left: 5px;" onsubmit="return confirm('Are you sure you want to REJECT Claim #@claim.Id?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@claim.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            <i class="bi bi-x-circle-fill"></i> Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card mt-4 bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Manager Approval Guidelines</h5>
+                <ul class="mb-0">
+                    <li>Review each claim that has been pre-approved by the Program Coordinator</li>
+                    <li>Verify the calculated amounts (Hours × Rate = Total)</li>
+                    <li>Check supporting documents if available</li>
+                    <li>Final approval authorizes payment processing</li>
+                    <li>Rejected claims will be marked as "Rejected" and payment will not proceed</li>
+                </ul>
+            </div>
+        </div>
+    }
+
+    <div class="mt-3">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+    </div>
+</div>

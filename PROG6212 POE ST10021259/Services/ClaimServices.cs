@@ -38,6 +38,24 @@
             }
         }
 
+        // New method for Manager to get claims approved by Coordinator
+        public static List<Models.Claim> GetApprovedClaims()
+        {
+            lock (_lock)
+            {
+                return _claims.Where(c => c.Status == "Approved").ToList();
+            }
+        }
+
+        // Get all finally approved claims (approved by both Coordinator and Manager)
+        public static List<Models.Claim> GetFinalApprovedClaims()
+        {
+            lock (_lock)
+            {
+                return _claims.Where(c => c.Status == "FinalApproved").ToList();
+            }
+        }
+
         public static Models.Claim? GetClaimById(int id)
         {
             lock (_lock)
@@ -57,6 +75,22 @@
                     return true;
                 }
                 return false;
+            }
+        }
+
+        // Get claims statistics for dashboard
+        public static Dictionary<string, int> GetClaimsStatistics()
+        {
+            lock (_lock)
+            {
+                return new Dictionary<string, int>
+                {
+                    { "Total", _claims.Count },
+                    { "Pending", _claims.Count(c => c.Status == "Pending") },
+                    { "Approved", _claims.Count(c => c.Status == "Approved") },
+                    { "FinalApproved", _claims.Count(c => c.Status == "FinalApproved") },
+                    { "Rejected", _claims.Count(c => c.Status == "Rejected") }
+                };
             }
         }
     }

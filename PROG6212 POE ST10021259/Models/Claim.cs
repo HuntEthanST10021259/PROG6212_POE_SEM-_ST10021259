@@ -23,9 +23,27 @@ namespace PROG6212_POE_ST10021259.Models
 
         public DateTime DateSubmitted { get; set; } = DateTime.Now;
 
+        // Enhanced Status with two-level approval
         public string Status { get; set; } = "Pending";
 
-        // Calculated property
-        public double TotalAmount => HoursWorked * HourlyRate;
+        // New properties for two-level approval
+        public DateTime? CoordinatorApprovedDate { get; set; }
+        public string? CoordinatorApprovedBy { get; set; }
+
+        public DateTime? ManagerApprovedDate { get; set; }
+        public string? ManagerApprovedBy { get; set; }
+
+        public DateTime? RejectedDate { get; set; }
+        public string? RejectedBy { get; set; }
+        public string? RejectionReason { get; set; }
+
+        // Calculated property with auto-calculation
+        public double TotalAmount => Math.Round(HoursWorked * HourlyRate, 2);
+
+        // Status helper methods
+        public bool IsPendingCoordinatorReview => Status == "Pending";
+        public bool IsPendingManagerReview => Status == "CoordinatorApproved";
+        public bool IsFullyApproved => Status == "Approved";
+        public bool IsRejected => Status == "Rejected";
     }
 }

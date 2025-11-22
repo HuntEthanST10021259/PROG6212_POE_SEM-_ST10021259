@@ -1,0 +1,57 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace PROG6212_POE_ST10021259.Models
+{
+    public class Lecturer
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "First name is required")]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Last name is required")]
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        [Display(Name = "Email Address")]
+        public string Email { get; set; } = string.Empty;
+
+        [Phone(ErrorMessage = "Invalid phone number")]
+        [Display(Name = "Phone Number")]
+        public string? Phone { get; set; }
+
+        [Display(Name = "Department")]
+        public string? Department { get; set; }
+
+        [Display(Name = "Employee Number")]
+        public string? EmployeeNumber { get; set; }
+
+        [Display(Name = "Bank Account Number")]
+        public string? BankAccount { get; set; }
+
+        [Display(Name = "Bank Name")]
+        public string? BankName { get; set; }
+
+        [Display(Name = "Branch Code")]
+        public string? BranchCode { get; set; }
+
+        public DateTime DateAdded { get; set; } = DateTime.Now;
+
+        public DateTime? LastUpdated { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        public string FullName => $"{FirstName} {LastName}";
+    }
+
+    public class PaymentReportViewModel
+    {
+        public DateTime GeneratedDate { get; set; }
+        public List<Claim> Claims { get; set; } = new List<Claim>();
+        public double TotalAmount { get; set; }
+        public int TotalClaims { get; set; }
+    }
+}

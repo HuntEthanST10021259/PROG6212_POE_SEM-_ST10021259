@@ -1,0 +1,77 @@
+﻿@model PROG6212_POE_ST10021259.Models.Claim
+@{
+    ViewData["Title"] = "Invoice";
+    var invoiceNumber = $"INV-{Model.Id:D4}-{DateTime.Now:yyyyMMdd}";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-receipt"></i> Invoice #@invoiceNumber</h2>
+        <button onclick="window.print()" class="btn btn-success">
+            <i class="bi bi-printer"></i> Print
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-6">
+                    <h4>Contract Monthly Claim System</h4>
+                    <p class="text-muted mb-0">Varsity College</p>
+                </div>
+                <div class="col-6 text-end">
+                    <h5>INVOICE</h5>
+                    <p class="mb-0"><strong>Invoice #:</strong> @invoiceNumber</p>
+                    <p class="mb-0"><strong>Date:</strong> @DateTime.Now.ToString("dd/MM/yyyy")</p>
+                    <p class="mb-0"><strong>Claim ID:</strong> #@Model.Id</p>
+                </div>
+            </div>
+
+            <hr />
+
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Description</th>
+                        <th>Hours</th>
+                        <th>Rate</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Lecturer Contract Work - @Model.DateSubmitted.ToString("MMMM yyyy")</td>
+                        <td>@Model.HoursWorked</td>
+                        <td>R @Model.HourlyRate.ToString("F2")</td>
+                        <td class="text-end">R @Model.TotalAmount.ToString("F2")</td>
+                    </tr>
+                </tbody>
+                <tfoot class="table-success">
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                        <td class="text-end"><strong>R @Model.TotalAmount.ToString("F2")</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="mt-3">
+                <small class="text-muted">
+                    <strong>Approved by:</strong> @Model.ManagerApprovedBy on @Model.ManagerApprovedDate?.ToString("dd/MM/yyyy")
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 no-print">
+        <a asp-action="ApprovedClaims" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        .no-print, .btn {
+            display: none;
+        }
+    }</style>

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.Logging;
 using Moq;
 using PROG6212_POE_ST10021259.Controllers;
 using PROG6212_POE_ST10021259.Models;
@@ -11,50 +12,58 @@ namespace PROG6212_POE_ST10021259.Tests
 {
     public class CoordinatorControllerTests
     {
+        private readonly Mock<ILogger<CoordinatorController>> _mockLogger;
+        private readonly Mock<IClaimService> _mockClaimService;
+
+        public CoordinatorControllerTests()
+        {
+            _mockLogger = new Mock<ILogger<CoordinatorController>>();
+            _mockClaimService = new Mock<IClaimService>();
+        }
+
         [Fact]
-        public void VerifyClaims_ShouldReturnViewWithPendingClaims()
+        public async Task VerifyClaims_ShouldReturnViewWithPendingClaims()
         {
             // Arrange
-            var controller = new CoordinatorController();
-
-            // Add a pending claim
-            var claim = new Claim
+            var pendingClaims = new List<Claim>
             {
-                Id = ClaimService.GetNextId(),
-                HoursWorked = 40,
-                HourlyRate = 500,
-                Status = "Pending"
+                new Claim
+                {
+                    Id = 1,
+                    HoursWorked = 40,
+                    HourlyRate = 500,
+                    Status = "Pending"
+                }
             };
-            ClaimService.AddClaim(claim);
+
+            _mockClaimService.Setup(s => s.GetPendingClaimsAsync())
+                .ReturnsAsync(pendingClaims);
+
+            var controller = new CoordinatorController(_mockLogger.Object, _mockClaimService.Object);
 
             // Act
-            var result = controller.VerifyClaims() as ViewResult;
+            var result = await controller.VerifyClaims() as ViewResult;
 
             // Assert
             Assert.NotNull(result);
             var model = Assert.IsAssignableFrom<List<Claim>>(result.Model);
+            Assert.Single(model);
             Assert.Contains(model, c => c.Status == "Pending");
         }
 
         [Fact]
-        public void Approve_WithValidId_ShouldSetSuccessMessage()
+        public async Task Approve_WithValidId_ShouldSetSuccessMessage()
         {
             // Arrange
-            var controller = new CoordinatorController();
+            _mockClaimService.Setup(s => s.CoordinatorApproveClaimAsync(1, "Coordinator"))
+                .ReturnsAsync(true);
+
+            var controller = new CoordinatorController(_mockLogger.Object, _mockClaimService.Object);
             var tempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
             controller.TempData = tempData;
 
-            var claim = new Claim
-            {
-                Id = ClaimService.GetNextId(),
-                HoursWorked = 30,
-                HourlyRate = 400,
-                Status = "Pending"
-            };
-            ClaimService.AddClaim(claim);
-
             // Act
-            var result = controller.Approve(claim.Id) as RedirectToActionResult;
+            var result = await controller.Approve(1) as RedirectToActionResult;
 
             // Assert
             Assert.NotNull(result);
@@ -64,15 +73,18 @@ namespace PROG6212_POE_ST10021259.Tests
         }
 
         [Fact]
-        public void Approve_WithInvalidId_ShouldSetErrorMessage()
+        public async Task Approve_WithInvalidId_ShouldSetErrorMessage()
         {
             // Arrange
-            var controller = new CoordinatorController();
+            _mockClaimService.Setup(s => s.CoordinatorApproveClaimAsync(99999, "Coordinator"))
+                .ReturnsAsync(false);
+
+            var controller = new CoordinatorController(_mockLogger.Object, _mockClaimService.Object);
             var tempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
             controller.TempData = tempData;
 
             // Act
-            var result = controller.Approve(99999) as RedirectToActionResult;
+            var result = await controller.Approve(99999) as RedirectToActionResult;
 
             // Assert
             Assert.NotNull(result);
@@ -81,24 +93,18 @@ namespace PROG6212_POE_ST10021259.Tests
         }
 
         [Fact]
-        public void Reject_WithValidId_ShouldSetSuccessMessage()
+        public async Task Reject_WithValidId_ShouldSetSuccessMessage()
         {
             // Arrange
-            var controller = new CoordinatorController();
+            _mockClaimService.Setup(s => s.RejectClaimAsync(1, "Coordinator", It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            var controller = new CoordinatorController(_mockLogger.Object, _mockClaimService.Object);
             var tempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
             controller.TempData = tempData;
 
-            var claim = new Claim
-            {
-                Id = ClaimService.GetNextId(),
-                HoursWorked = 25,
-                HourlyRate = 350,
-                Status = "Pending"
-            };
-            ClaimService.AddClaim(claim);
-
             // Act
-            var result = controller.Reject(claim.Id) as RedirectToActionResult;
+            var result = await controller.Reject(1, "Test reason") as RedirectToActionResult;
 
             // Assert
             Assert.NotNull(result);
@@ -108,15 +114,18 @@ namespace PROG6212_POE_ST10021259.Tests
         }
 
         [Fact]
-        public void Reject_WithInvalidId_ShouldSetErrorMessage()
+        public async Task Reject_WithInvalidId_ShouldSetErrorMessage()
         {
             // Arrange
-            var controller = new CoordinatorController();
+            _mockClaimService.Setup(s => s.RejectClaimAsync(99999, "Coordinator", It.IsAny<string>()))
+                .ReturnsAsync(false);
+
+            var controller = new CoordinatorController(_mockLogger.Object, _mockClaimService.Object);
             var tempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
             controller.TempData = tempData;
 
             // Act
-            var result = controller.Reject(99999) as RedirectToActionResult;
+            var result = await controller.Reject(99999, "Test reason") as RedirectToActionResult;
 
             // Assert
             Assert.NotNull(result);
@@ -125,53 +134,70 @@ namespace PROG6212_POE_ST10021259.Tests
         }
 
         [Fact]
-        public void Approve_ShouldUpdateClaimStatusToApproved()
+        public async Task Approve_ShouldCallServiceMethod()
         {
             // Arrange
-            var controller = new CoordinatorController();
+            _mockClaimService.Setup(s => s.CoordinatorApproveClaimAsync(1, "Coordinator"))
+                .ReturnsAsync(true);
+
+            var controller = new CoordinatorController(_mockLogger.Object, _mockClaimService.Object);
             var tempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
             controller.TempData = tempData;
 
-            var claim = new Claim
-            {
-                Id = ClaimService.GetNextId(),
-                HoursWorked = 35,
-                HourlyRate = 450,
-                Status = "Pending"
-            };
-            ClaimService.AddClaim(claim);
-
             // Act
-            controller.Approve(claim.Id);
-            var updatedClaim = ClaimService.GetClaimById(claim.Id);
+            await controller.Approve(1);
 
             // Assert
-            Assert.Equal("Approved", updatedClaim.Status);
+            _mockClaimService.Verify(s => s.CoordinatorApproveClaimAsync(1, "Coordinator"), Times.Once);
         }
 
         [Fact]
-        public void Reject_ShouldUpdateClaimStatusToRejected()
+        public async Task Reject_ShouldCallServiceMethod()
         {
             // Arrange
-            var controller = new CoordinatorController();
+            _mockClaimService.Setup(s => s.RejectClaimAsync(1, "Coordinator", "Test reason"))
+                .ReturnsAsync(true);
+
+            var controller = new CoordinatorController(_mockLogger.Object, _mockClaimService.Object);
             var tempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
             controller.TempData = tempData;
 
-            var claim = new Claim
-            {
-                Id = ClaimService.GetNextId(),
-                HoursWorked = 20,
-                HourlyRate = 300,
-                Status = "Pending"
-            };
-            ClaimService.AddClaim(claim);
-
             // Act
-            controller.Reject(claim.Id);
-            var updatedClaim = ClaimService.GetClaimById(claim.Id);
+            await controller.Reject(1, "Test reason");
 
             // Assert
-            Assert.Equal("Rejected", updatedClaim.Status);
+            _mockClaimService.Verify(s => s.RejectClaimAsync(1, "Coordinator", "Test reason"), Times.Once);
+        }
+
+        [Fact]
+        public async Task Dashboard_ShouldReturnViewWithStatistics()
+        {
+            // Arrange
+            var stats = new Dictionary<string, int>
+            {
+                { "Total", 10 },
+                { "Pending", 5 },
+                { "CoordinatorApproved", 3 },
+                { "Approved", 2 },
+                { "Rejected", 0 }
+            };
+
+            var claims = new List<Claim>
+            {
+                new Claim { Id = 1, HoursWorked = 40, HourlyRate = 500, Status = "Pending", DateSubmitted = DateTime.Now }
+            };
+
+            _mockClaimService.Setup(s => s.GetClaimStatisticsAsync()).ReturnsAsync(stats);
+            _mockClaimService.Setup(s => s.GetAllClaimsAsync()).ReturnsAsync(claims);
+
+            var controller = new CoordinatorController(_mockLogger.Object, _mockClaimService.Object);
+
+            // Act
+            var result = await controller.Dashboard() as ViewResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotNull(result.ViewData["Statistics"]);
         }
     }
 }

@@ -1,10 +1,12 @@
 ﻿@model List<PROG6212_POE_ST10021259.Models.Claim>
 @{
-    ViewData["Title"] = "Verify Claims";
+    ViewData["Title"] = "Manager Review";
 }
 
 <div class="container mt-4">
-    <h2 class="mb-4">Pending Claims for Verification</h2>
+    <h2 class="mb-4">
+        <i class="bi bi-shield-check"></i> Final Claim Review (Manager)
+    </h2>
 
     @if (TempData["Message"] != null)
     {
@@ -25,14 +27,14 @@
     @if (Model == null || Model.Count == 0)
     {
         <div class="alert alert-info">
-            <h5><i class="bi bi-info-circle"></i> No Pending Claims</h5>
-            <p>There are currently no claims awaiting verification.</p>
+            <h5><i class="bi bi-info-circle"></i> No Claims Pending Manager Review</h5>
+            <p>There are currently no claims awaiting final manager approval.</p>
         </div>
     }
     else
     {
         <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle"></i> <strong>@Model.Count</strong> claim(s) pending verification
+            <i class="bi bi-exclamation-triangle"></i> <strong>@Model.Count</strong> claim(s) pending final approval
         </div>
 
         <div class="table-responsive">
@@ -40,28 +42,29 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Claim ID</th>
-                        <th>Date Submitted</th>
-                        <th>Hours Worked</th>
-                        <th>Hourly Rate</th>
-                        <th>Total Amount</th>
+                        <th>Submitted</th>
+                        <th>Hours</th>
+                        <th>Rate</th>
+                        <th>Total</th>
                         <th>Validation</th>
                         <th>Notes</th>
                         <th>Document</th>
+                        <th>Coordinator</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var claim in Model.OrderBy(c => c.DateSubmitted))
+                    @foreach (var claim in Model.OrderBy(c => c.CoordinatorApprovedDate))
                     {
-                        <tr id="claim-@claim.Id">
+                        <tr>
                             <td><strong>#@claim.Id</strong></td>
-                            <td>@claim.DateSubmitted.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@claim.DateSubmitted.ToString("dd/MM/yyyy")</td>
                             <td>@claim.HoursWorked hrs</td>
                             <td>R @claim.HourlyRate.ToString("F2")</td>
                             <td><strong class="text-success">R @claim.TotalAmount.ToString("F2")</strong></td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-info" onclick="validateClaim(@claim.Id, @claim.HoursWorked, @claim.HourlyRate, @claim.TotalAmount, '@(claim.SupportingDocument ?? "")')">
-                                    <i class="bi bi-check2-square"></i> Auto-Validate
+                                    <i class="bi bi-check2-square"></i> Validate
                                 </button>
                                 <div id="validation-@claim.Id" class="mt-2" style="display:none;"></div>
                             </td>
@@ -72,7 +75,7 @@
                                 }
                                 else
                                 {
-                                    <span class="text-muted">No notes</span>
+                                    <span class="text-muted">None</span>
                                 }
                             </td>
                             <td>
@@ -84,12 +87,19 @@
                                 }
                                 else
                                 {
-                                    <span class="text-muted">No document</span>
+                                    <span class="text-muted">None</span>
                                 }
                             </td>
                             <td>
+                                <small>
+                                    <i class="bi bi-check-circle text-success"></i><br>
+                                    @claim.CoordinatorApprovedBy<br>
+                                    @claim.CoordinatorApprovedDate?.ToString("dd/MM HH:mm")
+                                </small>
+                            </td>
+                            <td>
                                 <div class="btn-group-vertical" role="group">
-                                    <form asp-action="Approve" method="post" onsubmit="return confirm('Approve Claim #@claim.Id?');">
+                                    <form asp-action="Approve" method="post" onsubmit="return confirm('Final approve Claim #@claim.Id? Payment will be processed.');">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@claim.Id" />
                                         <button type="submit" class="btn btn-success btn-sm">
@@ -135,8 +145,11 @@
     }
 
     <div class="mt-3">
+        <a asp-action="Dashboard" class="btn btn-primary">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
         <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Home
+            <i class="bi bi-arrow-left"></i> Home
         </a>
     </div>
 </div>
@@ -153,59 +166,29 @@
 
         let warnings = [];
         let errors = [];
-        let autoApproval = true;
 
         if (hours < minHours || hours > maxHours) {
-            errors.push('Hours (' + hours + ') outside valid range (' + minHours + '-' + maxHours + ')');
+            errors.push('Hours outside range');
         }
-
-        if (rate < minRate) {
-            warnings.push('Rate (R' + rate.toFixed(2) + ') below minimum (R' + minRate.toFixed(2) + ')');
-            autoApproval = false;
-        }
-
-        if (rate > maxRate) {
-            warnings.push('Rate (R' + rate.toFixed(2) + ') exceeds maximum (R' + maxRate.toFixed(2) + ')');
-            autoApproval = false;
-        }
-
-        if (total > maxTotal) {
-            warnings.push('Total (R' + total.toFixed(2) + ') exceeds threshold (R' + maxTotal.toFixed(2) + ')');
-            autoApproval = false;
-        }
-
-        if (total > docThreshold && !document) {
-            warnings.push('Claims over R' + docThreshold.toFixed(2) + ' require documents');
-            autoApproval = false;
-        }
-
-        if (hours > 160) {
-            warnings.push('Hours (' + hours + ') exceeds typical monthly hours (160)');
-        }
+        if (rate < minRate) warnings.push('Low hourly rate');
+        if (rate > maxRate) warnings.push('High hourly rate');
+        if (total > maxTotal) warnings.push('Exceeds max amount');
+        if (total > docThreshold && !document) warnings.push('Missing required document');
+        if (hours > 160) warnings.push('Exceeds typical hours');
 
         let html = '<div class="small">';
 
         if (errors.length > 0) {
-            html += '<div class="alert alert-danger py-1 mb-1">';
-            html += '<strong>Errors:</strong><ul class="mb-0">';
-            errors.forEach(function(e) { html += '<li>' + e + '</li>'; });
-            html += '</ul></div>';
-        }
-
-        if (warnings.length > 0) {
-            html += '<div class="alert alert-warning py-1 mb-1">';
-            html += '<strong>Warnings:</strong><ul class="mb-0">';
-            warnings.forEach(function(w) { html += '<li>' + w + '</li>'; });
-            html += '</ul></div>';
-        }
-
-        if (errors.length === 0 && warnings.length === 0) {
-            html += '<div class="alert alert-success py-1 mb-0">';
-            html += '<i class="bi bi-check-circle"></i> Valid - Eligible for auto-approval';
+            html += '<div class="alert alert-danger py-1 mb-0">';
+            html += '<strong>Issues:</strong> ' + errors.join(', ');
             html += '</div>';
-        } else if (errors.length === 0) {
-            html += '<div class="alert alert-info py-1 mb-0">';
-            html += '<i class="bi bi-info-circle"></i> Valid but requires manual review';
+        } else if (warnings.length > 0) {
+            html += '<div class="alert alert-warning py-1 mb-0">';
+            html += '<strong>Warnings:</strong> ' + warnings.join(', ');
+            html += '</div>';
+        } else {
+            html += '<div class="alert alert-success py-1 mb-0">';
+            html += '<i class="bi bi-check-circle"></i> All checks passed';
             html += '</div>';
         }
 

@@ -38,7 +38,14 @@
             }
         }
 
-        // New method for Manager to get claims approved by Coordinator
+        public static List<Models.Claim> GetCoordinatorApprovedClaims()
+        {
+            lock (_lock)
+            {
+                return _claims.Where(c => c.Status == "CoordinatorApproved").ToList();
+            }
+        }
+
         public static List<Models.Claim> GetApprovedClaims()
         {
             lock (_lock)
@@ -47,12 +54,11 @@
             }
         }
 
-        // Get all finally approved claims (approved by both Coordinator and Manager)
-        public static List<Models.Claim> GetFinalApprovedClaims()
+        public static List<Models.Claim> GetRejectedClaims()
         {
             lock (_lock)
             {
-                return _claims.Where(c => c.Status == "FinalApproved").ToList();
+                return _claims.Where(c => c.Status == "Rejected").ToList();
             }
         }
 
@@ -61,6 +67,55 @@
             lock (_lock)
             {
                 return _claims.FirstOrDefault(c => c.Id == id);
+            }
+        }
+
+        public static bool CoordinatorApproveClaim(int id, string coordinatorName)
+        {
+            lock (_lock)
+            {
+                var claim = _claims.FirstOrDefault(c => c.Id == id);
+                if (claim != null && claim.Status == "Pending")
+                {
+                    claim.Status = "CoordinatorApproved";
+                    claim.CoordinatorApprovedDate = DateTime.Now;
+                    claim.CoordinatorApprovedBy = coordinatorName;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public static bool ManagerApproveClaim(int id, string managerName)
+        {
+            lock (_lock)
+            {
+                var claim = _claims.FirstOrDefault(c => c.Id == id);
+                if (claim != null && claim.Status == "CoordinatorApproved")
+                {
+                    claim.Status = "Approved";
+                    claim.ManagerApprovedDate = DateTime.Now;
+                    claim.ManagerApprovedBy = managerName;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public static bool RejectClaim(int id, string rejectedBy, string reason)
+        {
+            lock (_lock)
+            {
+                var claim = _claims.FirstOrDefault(c => c.Id == id);
+                if (claim != null && (claim.Status == "Pending" || claim.Status == "CoordinatorApproved"))
+                {
+                    claim.Status = "Rejected";
+                    claim.RejectedDate = DateTime.Now;
+                    claim.RejectedBy = rejectedBy;
+                    claim.RejectionReason = reason;
+                    return true;
+                }
+                return false;
             }
         }
 
@@ -78,8 +133,7 @@
             }
         }
 
-        // Get claims statistics for dashboard
-        public static Dictionary<string, int> GetClaimsStatistics()
+        public static Dictionary<string, int> GetClaimStatistics()
         {
             lock (_lock)
             {
@@ -87,8 +141,8 @@
                 {
                     { "Total", _claims.Count },
                     { "Pending", _claims.Count(c => c.Status == "Pending") },
+                    { "CoordinatorApproved", _claims.Count(c => c.Status == "CoordinatorApproved") },
                     { "Approved", _claims.Count(c => c.Status == "Approved") },
-                    { "FinalApproved", _claims.Count(c => c.Status == "FinalApproved") },
                     { "Rejected", _claims.Count(c => c.Status == "Rejected") }
                 };
             }

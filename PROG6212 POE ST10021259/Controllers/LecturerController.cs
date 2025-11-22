@@ -1,19 +1,31 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using PROG6212_POE_ST10021259.Models;
 using PROG6212_POE_ST10021259.Services;
-using System.IO;
 
 namespace PROG6212_POE_ST10021259.Controllers
 {
+    [Authorize(Roles = "Lecturer")]
     public class LecturerController : Controller
     {
         private readonly ILogger<LecturerController> _logger;
-        private const long MaxFileSize = 10 * 1024 * 1024; // 10MB
-        private readonly string[] AllowedExtensions = { ".pdf", ".doc", ".docx", ".xlsx" };
+        private readonly IClaimService _claimService;
+        private readonly ClaimValidationService _validationService;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private const long MaxFileSize = 10 * 1024 * 1024;
+        private static readonly string[] AllowedExtensions = { ".pdf", ".doc", ".docx", ".xlsx" };
 
-        public LecturerController(ILogger<LecturerController> logger)
+        public LecturerController(
+            ILogger<LecturerController> logger,
+            IClaimService claimService,
+            ClaimValidationService validationService,
+            UserManager<ApplicationUser> userManager)
         {
             _logger = logger;
+            _claimService = claimService;
+            _validationService = validationService;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -24,120 +36,79 @@ namespace PROG6212_POE_ST10021259.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult SubmitClaim(Claim claim, IFormFile? supportingDocument)
+        public async Task<IActionResult> SubmitClaim(Claim claim, IFormFile? supportingDocument)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    // Validate file if uploaded
-                    if (supportingDocument != null && supportingDocument.Length > 0)
+                    var validationResult = _validationService.ValidateClaim(claim);
+                    if (!validationResult.IsValid)
                     {
-                        // Check file size
-                        if (supportingDocument.Length > MaxFileSize)
-                        {
-                            ModelState.AddModelError("supportingDocument",
-                                "File size cannot exceed 10MB.");
-                            return View(claim);
-                        }
-
-                        // Check file extension
-                        var fileExtension = Path.GetExtension(supportingDocument.FileName).ToLowerInvariant();
-                        if (!AllowedExtensions.Contains(fileExtension))
-                        {
-                            ModelState.AddModelError("supportingDocument",
-                                "Only PDF, DOC, DOCX, and XLSX files are allowed.");
-                            return View(claim);
-                        }
-
-                        // Validate file name
-                        if (string.IsNullOrWhiteSpace(supportingDocument.FileName))
-                        {
-                            ModelState.AddModelError("supportingDocument",
-                                "Invalid file name.");
-                            return View(claim);
-                        }
+                        foreach (var error in validationResult.Errors)
+                            ModelState.AddModelError("", error);
+                        return View(claim);
                     }
 
-                    // Assign unique ID from shared service
-                    claim.Id = ClaimService.GetNextId();
+                    if (supportingDocument != null && supportingDocument.Length > 0)
+                    {
+                        if (supportingDocument.Length > MaxFileSize)
+                        {
+                            ModelState.AddModelError("supportingDocument", "File size cannot exceed 10MB.");
+                            return View(claim);
+                        }
+
+                        var ext = Path.GetExtension(supportingDocument.FileName).ToLowerInvariant();
+                        if (!AllowedExtensions.Contains(ext))
+                        {
+                            ModelState.AddModelError("supportingDocument", "Only PDF, DOC, DOCX, and XLSX files are allowed.");
+                            return View(claim);
+                        }
+
+                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                        if (!Directory.Exists(uploadsFolder))
+                            Directory.CreateDirectory(uploadsFolder);
+
+                        var uniqueFileName = $"{Guid.NewGuid()}{ext}";
+                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                            await supportingDocument.CopyToAsync(stream);
+
+                        claim.SupportingDocument = uniqueFileName;
+                    }
+
+                    var user = await _userManager.GetUserAsync(User);
+                    claim.SubmittedByUserId = user?.Id;
+                    claim.SubmittedByName = user?.FullName;
                     claim.DateSubmitted = DateTime.Now;
                     claim.Status = "Pending";
 
-                    // Handle file upload
-                    if (supportingDocument != null && supportingDocument.Length > 0)
-                    {
-                        try
-                        {
-                            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                    await _claimService.AddClaimAsync(claim);
 
-                            // Create directory if it doesn't exist
-                            if (!Directory.Exists(uploadsFolder))
-                            {
-                                Directory.CreateDirectory(uploadsFolder);
-                            }
+                    var warningMsg = validationResult.Warnings.Count > 0
+                        ? " Note: " + string.Join("; ", validationResult.Warnings)
+                        : "";
 
-                            // Generate unique file name to prevent overwriting
-                            var fileExtension = Path.GetExtension(supportingDocument.FileName);
-                            var uniqueFileName = $"{claim.Id}_{Guid.NewGuid()}{fileExtension}";
-                            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                            // Save file
-                            using (var stream = new FileStream(filePath, FileMode.Create))
-                            {
-                                supportingDocument.CopyTo(stream);
-                            }
-
-                            claim.SupportingDocument = uniqueFileName;
-                            _logger.LogInformation($"File uploaded successfully: {uniqueFileName}");
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Error uploading file");
-                            ModelState.AddModelError("supportingDocument",
-                                "An error occurred while uploading the file. Please try again.");
-                            return View(claim);
-                        }
-                    }
-
-                    // Save claim to shared storage
-                    ClaimService.AddClaim(claim);
-
-                    TempData["Message"] = $"Claim submitted successfully! Claim ID: {claim.Id}, Total Amount: R{claim.TotalAmount:F2}";
-                    _logger.LogInformation($"Claim {claim.Id} submitted successfully");
-
+                    TempData["Message"] = $"Claim submitted successfully! Total: R{claim.TotalAmount:F2}.{warningMsg}";
                     return RedirectToAction("SubmitClaim");
                 }
-
                 return View(claim);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error while submitting claim");
-                TempData["Error"] = "An unexpected error occurred while submitting your claim. Please try again or contact support.";
+                _logger.LogError(ex, "Error submitting claim");
+                TempData["Error"] = "An error occurred. Please try again.";
                 return View(claim);
             }
         }
 
         [HttpGet]
-        public IActionResult TrackStatus()
+        public async Task<IActionResult> TrackStatus()
         {
-            try
-            {
-                var claims = ClaimService.GetAllClaims();
-                return View(claims);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving claims");
-                TempData["Error"] = "An error occurred while retrieving your claims. Please try again.";
-                return View(new List<Claim>());
-            }
-        }
-
-        public IActionResult Test()
-        {
-            return Content("Lecturer controller is working!");
+            var user = await _userManager.GetUserAsync(User);
+            var claims = await _claimService.GetClaimsByUserAsync(user?.Id ?? "");
+            return View(claims);
         }
     }
 }

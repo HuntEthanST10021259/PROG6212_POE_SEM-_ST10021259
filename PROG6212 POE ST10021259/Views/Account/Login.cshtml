@@ -1,0 +1,55 @@
+﻿@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4><i class="bi bi-lock"></i> Login</h4>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert alert-danger">@ViewBag.Error</div>
+                    }
+
+                    <form asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required autofocus />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" name="password" class="form-control" required />
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </button>
+                        </div>
+                    </form>
+                    <div class="text-center mt-3">
+                        <p>Don't have an account? <a asp-action="Register">Register here</a></p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <strong>Demo Accounts:</strong><br>
+                        Lecturer: lecturer@test.com / Lecturer123!<br>
+                        Coordinator: coordinator@test.com / Coordinator123!<br>
+                        Manager: manager@test.com / Manager123!<br>
+                        HR: hr@test.com / Hr123456!
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

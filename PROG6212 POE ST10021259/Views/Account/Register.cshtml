@@ -1,0 +1,67 @@
+﻿@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Create New Account</h3>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert alert-danger">@ViewBag.Error</div>
+                    }
+
+                    <form method="post" asp-action="Register">
+                        <div class="mb-3">
+                            <label class="form-label">First Name</label>
+                            <input type="text" name="firstName" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" name="lastName" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" name="password" class="form-control" required />
+                            <small class="text-muted">Minimum 6 characters</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" name="confirmPassword" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Select Role</label>
+                            <select name="role" class="form-select" required>
+                                <option value="">-- Choose Role --</option>
+                                <option value="Lecturer">Lecturer</option>
+                                <option value="Coordinator">Program Coordinator</option>
+                                <option value="Manager">Academic Manager</option>
+                                <option value="HR">HR</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                        @Html.AntiForgeryToken()
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p>Already have an account? <a asp-action="Login">Login here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

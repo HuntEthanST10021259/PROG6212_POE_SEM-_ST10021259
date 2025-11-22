@@ -14,30 +14,38 @@
         </div>
     }
 
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div class="row">
         <div class="col-md-8">
             <form asp-controller="Lecturer" asp-action="SubmitClaim" method="post" enctype="multipart/form-data" class="card p-4 shadow-sm" id="claimForm">
+                @Html.AntiForgeryToken()
+
                 <div class="mb-3">
                     <label asp-for="HoursWorked" class="form-label"></label>
-                    <input asp-for="HoursWorked" class="form-control" id="hoursWorked" placeholder="Enter hours worked" type="number" step="0.01" />
+                    <input asp-for="HoursWorked" class="form-control" id="hoursWorked" placeholder="Enter hours worked" type="number" step="0.01" min="0.01" max="744" />
                     <span asp-validation-for="HoursWorked" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="HourlyRate" class="form-label"></label>
-                    <input asp-for="HourlyRate" class="form-control" id="hourlyRate" placeholder="Enter hourly rate" type="number" step="0.01" />
+                    <input asp-for="HourlyRate" class="form-control" id="hourlyRate" placeholder="Enter hourly rate" type="number" step="0.01" min="0.01" />
                     <span asp-validation-for="HourlyRate" class="text-danger"></span>
                 </div>
 
-                <!-- Auto-calculated Total Amount Display -->
                 <div class="mb-3">
-                    <div class="card bg-light border-success">
-                        <div class="card-body">
-                            <h5 class="card-title text-success">Calculated Total Amount</h5>
-                            <h2 class="text-success" id="totalAmount">R 0.00</h2>
-                            <small class="text-muted">This amount is automatically calculated based on hours worked × hourly rate</small>
-                        </div>
+                    <label class="form-label">Calculated Total Amount</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R</span>
+                        <input type="text" class="form-control bg-light" id="totalAmount" readonly value="0.00" style="font-size: 1.25rem; font-weight: bold;">
                     </div>
+                    <small class="text-muted">Automatically calculated (Hours × Rate)</small>
                 </div>
 
                 <div class="mb-3">
@@ -47,9 +55,9 @@
 
                 <div class="mb-3">
                     <label class="form-label">Upload Supporting Documents (Optional)</label>
-                    <input type="file" name="supportingDocument" id="supportingDocument" class="form-control" accept=".pdf,.doc,.docx,.xlsx" />
+                    <input type="file" name="supportingDocument" class="form-control" id="fileInput" accept=".pdf,.doc,.docx,.xlsx" />
                     <div class="form-text">Accepted formats: PDF, DOC, DOCX, XLSX (Max 10MB)</div>
-                    <div id="fileError" class="text-danger mt-2" style="display:none;"></div>
+                    <div id="fileValidation" class="text-danger mt-1" style="display: none;"></div>
                 </div>
 
                 <div class="d-grid gap-2">
@@ -70,10 +78,9 @@
                     <ul class="small">
                         <li>Enter the total hours worked for the month</li>
                         <li>Specify your hourly rate in Rands (R)</li>
-                        <li>Total amount will be calculated automatically</li>
+                        <li>Total amount is automatically calculated</li>
                         <li>Upload supporting documents if available</li>
-                        <li>Your claim will be reviewed by coordinator then manager</li>
-                        <li>Track your claim status anytime</li>
+                        <li>Your claim will be reviewed by Coordinator, then Manager</li>
                     </ul>
                 </div>
             </div>
@@ -83,8 +90,8 @@
                     <h5 class="card-title">Approval Process</h5>
                     <ol class="small mb-0">
                         <li>Submit your claim</li>
-                        <li>Program Coordinator reviews</li>
-                        <li>Manager gives final approval</li>
+                        <li>Coordinator reviews and approves</li>
+                        <li>Manager provides final approval</li>
                         <li>Payment processed</li>
                     </ol>
                 </div>
@@ -97,83 +104,70 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        // Auto-calculation functionality with jQuery
         $(document).ready(function() {
-            // Function to calculate and display total
+            // Auto-calculate total amount
             function calculateTotal() {
                 var hours = parseFloat($('#hoursWorked').val()) || 0;
                 var rate = parseFloat($('#hourlyRate').val()) || 0;
-                var total = hours * rate;
+                var total = (hours * rate).toFixed(2);
+                $('#totalAmount').val(total);
 
-                $('#totalAmount').text('R ' + total.toFixed(2));
-
-                // Validation feedback
-                if (hours > 0 && rate > 0) {
-                    $('#totalAmount').removeClass('text-danger').addClass('text-success');
+                if (total > 0) {
+                    $('#totalAmount').removeClass('text-muted').addClass('text-success');
                 } else {
                     $('#totalAmount').removeClass('text-success').addClass('text-muted');
                 }
             }
 
-            // Attach event listeners for real-time calculation
             $('#hoursWorked, #hourlyRate').on('input change', function() {
                 calculateTotal();
             });
 
             // File validation
-            $('#supportingDocument').on('change', function() {
+            $('#fileInput').on('change', function() {
                 var file = this.files[0];
-                var maxSize = 10 * 1024 * 1024; // 10MB
-                var allowedExtensions = ['.pdf', '.doc', '.docx', '.xlsx'];
-
-                $('#fileError').hide();
+                var fileValidation = $('#fileValidation');
 
                 if (file) {
-                    // Check file size
+                    var maxSize = 10 * 1024 * 1024;
                     if (file.size > maxSize) {
-                        $('#fileError').text('File size exceeds 10MB limit.').show();
-                        this.value = '';
+                        fileValidation.text('File size exceeds 10MB. Please choose a smaller file.').show();
+                        $(this).val('');
                         return;
                     }
 
-                    // Check file extension
+                    var allowedExtensions = ['.pdf', '.doc', '.docx', '.xlsx'];
                     var fileName = file.name.toLowerCase();
-                    var isValidExtension = allowedExtensions.some(function(ext) {
+                    var isValid = allowedExtensions.some(function(ext) {
                         return fileName.endsWith(ext);
                     });
 
-                    if (!isValidExtension) {
-                        $('#fileError').text('Only PDF, DOC, DOCX, and XLSX files are allowed.').show();
-                        this.value = '';
+                    if (!isValid) {
+                        fileValidation.text('Invalid file type. Only PDF, DOC, DOCX, and XLSX files are allowed.').show();
+                        $(this).val('');
                         return;
                     }
+
+                    fileValidation.hide();
+                } else {
+                    fileValidation.hide();
                 }
             });
 
-            // Form validation before submit
+            // Form submission
             $('#claimForm').on('submit', function(e) {
                 var hours = parseFloat($('#hoursWorked').val());
                 var rate = parseFloat($('#hourlyRate').val());
 
-                if (isNaN(hours) || hours <= 0 || hours > 744) {
-                    alert('Please enter valid hours worked (0.01 - 744)');
+                if (hours <= 0 || rate <= 0) {
                     e.preventDefault();
+                    alert('Please enter valid hours worked and hourly rate.');
                     return false;
                 }
 
-                if (isNaN(rate) || rate <= 0 || rate > 10000) {
-                    alert('Please enter valid hourly rate (0.01 - 10000)');
-                    e.preventDefault();
-                    return false;
-                }
-
-                // Disable submit button to prevent double submission
-                $('#submitBtn').prop('disabled', true).text('Submitting...');
-
-                return true;
+                $('#submitBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Submitting...');
             });
 
-            // Initial calculation on page load
             calculateTotal();
         });
     </script>

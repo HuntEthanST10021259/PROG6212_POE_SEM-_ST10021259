@@ -1,0 +1,93 @@
+﻿@model List<PROG6212_POE_ST10021259.Models.Lecturer>
+@{
+    ViewData["Title"] = "Manage Lecturers";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-person-gear"></i> Manage Lecturers</h2>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="mb-3">
+        <a asp-action="AddLecturer" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add New Lecturer
+        </a>
+        <a asp-action="Dashboard" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            No lecturers found. Click "Add New Lecturer" to add one.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Department</th>
+                        <th>Employee #</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var lecturer in Model)
+                    {
+                        <tr>
+                            <td>@lecturer.Id</td>
+                            <td><strong>@lecturer.FullName</strong></td>
+                            <td>@lecturer.Email</td>
+                            <td>@(lecturer.Phone ?? "N/A")</td>
+                            <td>@(lecturer.Department ?? "N/A")</td>
+                            <td>@(lecturer.EmployeeNumber ?? "N/A")</td>
+                            <td>
+                                @if (lecturer.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="EditLecturer" asp-route-id="@lecturer.Id" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <form asp-action="DeleteLecturer" method="post" style="display:inline" onsubmit="return confirm('Delete @lecturer.FullName?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@lecturer.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,0 +1,90 @@
+﻿@model PROG6212_POE_ST10021259.Models.Lecturer
+@{
+    ViewData["Title"] = "Edit Lecturer";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-pencil"></i> Edit Lecturer</h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="EditLecturer" method="post" class="card p-4 shadow-sm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="DateAdded" />
+
+                <h5 class="mb-3">Personal Information</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" type="email" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Department" class="form-label"></label>
+                        <input asp-for="Department" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EmployeeNumber" class="form-label"></label>
+                        <input asp-for="EmployeeNumber" class="form-control" />
+                    </div>
+                </div>
+
+                <hr />
+                <h5 class="mb-3">Banking Details</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="BankName" class="form-label"></label>
+                        <input asp-for="BankName" class="form-control" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="BankAccount" class="form-label"></label>
+                        <input asp-for="BankAccount" class="form-control" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="BranchCode" class="form-label"></label>
+                        <input asp-for="BranchCode" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsActive" class="form-check-label">Active</label>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-warning btn-lg">
+                        <i class="bi bi-check-circle"></i> Update Lecturer
+                    </button>
+                    <a asp-action="ManageLecturers" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

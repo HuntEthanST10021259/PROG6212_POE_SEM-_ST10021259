@@ -1,0 +1,95 @@
+﻿@model List<PROG6212_POE_ST10021259.Models.Claim>
+@{
+    ViewData["Title"] = "Generate Invoice";
+    var invoiceNumber = $"INV-{DateTime.Now:yyyyMMdd}-{DateTime.Now:HHmmss}";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-receipt"></i> Invoice</h2>
+        <button onclick="window.print()" class="btn btn-success">
+            <i class="bi bi-printer"></i> Print Invoice
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-6">
+                    <h4>Contract Monthly Claim System</h4>
+                    <p class="text-muted mb-0">Varsity College</p>
+                    <p class="text-muted mb-0">Johannesburg, South Africa</p>
+                </div>
+                <div class="col-6 text-end">
+                    <h5>INVOICE</h5>
+                    <p class="mb-0"><strong>Invoice #:</strong> @invoiceNumber</p>
+                    <p class="mb-0"><strong>Date:</strong> @DateTime.Now.ToString("dd MMMM yyyy")</p>
+                </div>
+            </div>
+
+            <hr />
+
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Claim ID</th>
+                        <th>Description</th>
+                        <th>Hours</th>
+                        <th>Rate</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var claim in Model)
+                    {
+                        <tr>
+                            <td>#@claim.Id</td>
+                            <td>Lecturer Contract Work - @claim.DateSubmitted.ToString("MMMM yyyy")</td>
+                            <td>@claim.HoursWorked</td>
+                            <td>R @claim.HourlyRate.ToString("F2")</td>
+                            <td class="text-end">R @claim.TotalAmount.ToString("F2")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                        <td class="text-end">R @Model.Sum(c => c.TotalAmount).ToString("F2")</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>VAT (0%):</strong></td>
+                        <td class="text-end">R 0.00</td>
+                    </tr>
+                    <tr class="table-success">
+                        <td colspan="4" class="text-end"><strong>TOTAL DUE:</strong></td>
+                        <td class="text-end"><strong>R @Model.Sum(c => c.TotalAmount).ToString("F2")</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="row mt-4">
+                <div class="col-6">
+                    <h6>Payment Terms</h6>
+                    <p class="small text-muted">Payment due within 30 days of invoice date.</p>
+                </div>
+                <div class="col-6 text-end">
+                    <p class="small text-muted">Thank you for your service.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 no-print">
+        <a asp-action="Dashboard" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        .no-print, .btn {
+            display: none;
+        }
+    }
+</style>
